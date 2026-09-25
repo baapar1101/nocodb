@@ -1,5 +1,9 @@
-import { SqlClientFactory } from './SqlClientFactory';
-import MssqlClient from './mssql/MssqlClient';
+jest.mock('~/helpers/resolveSslFileConfig', () => ({
+  resolveSslFileConfig: jest.fn(async () => undefined),
+}));
+
+const { SqlClientFactory } = require('./SqlClientFactory');
+const MssqlClient = require('./mssql/MssqlClient').default;
 
 describe('SqlClientFactory MSSQL', () => {
   const makeKnex = () => ({
