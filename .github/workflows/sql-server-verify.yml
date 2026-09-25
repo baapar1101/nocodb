@@ -6,12 +6,17 @@ on:
       - develop
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
 
       - uses: pnpm/action-setup@v4
         with:
@@ -23,17 +28,26 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies and refresh lockfile
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install --no-frozen-lockfile --ignore-scripts
+
+      - name: Commit refreshed lockfile
+        shell: bash
+        run: |
+          if git diff --quiet -- pnpm-lock.yaml; then
+            echo "Lockfile already current"
+            exit 0
+          fi
+          git config user.name "Albert Heidarian"
+          git config user.email "50908145+baapar1101@users.noreply.github.com"
+          git add pnpm-lock.yaml
+          git commit -s -m "build: update lockfile for SQL Server driver"
+          git push origin HEAD:feature/sql-server-data-source
+
+      - name: Build SDK
+        run: pnpm --filter=nocodb-sdk run build
 
       - name: Run MSSQL factory tests
         run: pnpm --filter=nocodb exec jest --runInBand --forceExit src/db/sql-client/lib/SqlClientFactory.spec.ts
 
       - name: Type-check backend
         run: pnpm --filter=nocodb exec tsc --noEmit --pretty false
-
-      - name: Upload refreshed lockfile
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: sql-server-pnpm-lock
-          path: pnpm-lock.yaml
