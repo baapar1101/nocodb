@@ -1,4 +1,8 @@
-import { SqlClientFactory } from './SqlClientFactory';
+jest.mock('~/helpers/resolveSslFileConfig', () => ({
+  resolveSslFileConfig: jest.fn(async () => undefined),
+}));
+
+const { SqlClientFactory } = require('./SqlClientFactory');
 
 const describeMssql =
   process.env.NC_TEST_MSSQL === 'true' ? describe : describe.skip;
