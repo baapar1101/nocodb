@@ -6,13 +6,18 @@ on:
       - develop
   workflow_dispatch:
 
-permissions:
-  contents: write
-
 jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    services:
+      mssql:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: Y
+          MSSQL_SA_PASSWORD: NocoDB_SQL_2026!
+        ports:
+          - 1433:1433
     steps:
       - uses: actions/checkout@v4
         with:
@@ -27,27 +32,24 @@ jobs:
           node-version: 24
           cache: pnpm
 
-      - name: Install dependencies and refresh lockfile
-        run: pnpm install --no-frozen-lockfile --ignore-scripts
-
-      - name: Commit refreshed lockfile
-        shell: bash
-        run: |
-          if git diff --quiet -- pnpm-lock.yaml; then
-            echo "Lockfile already current"
-            exit 0
-          fi
-          git config user.name "Albert Heidarian"
-          git config user.email "50908145+baapar1101@users.noreply.github.com"
-          git add pnpm-lock.yaml
-          git commit -s -m "build: update lockfile for SQL Server driver"
-          git push origin HEAD:feature/sql-server-data-source
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Build SDK
         run: pnpm --filter=nocodb-sdk run build
 
       - name: Run MSSQL factory tests
-        run: pnpm --filter=nocodb exec jest --runInBand --forceExit src/db/sql-client/lib/SqlClientFactory.spec.ts
+        run: pnpm --filter=nocodb exec jest --runInBand --forceExit SqlClientFactoryIntegration.spec.ts
 
       - name: Type-check backend
         run: pnpm --filter=nocodb exec tsc --noEmit --pretty false
+
+      - name: Run SQL Server 2022 smoke test
+        env:
+          NC_TEST_MSSQL: 'true'
+          MSSQL_HOST: 127.0.0.1
+          MSSQL_PORT: 1433
+          MSSQL_USER: sa
+          MSSQL_PASSWORD: NocoDB_SQL_2026!
+          MSSQL_DATABASE: master
+        run: pnpm --filter=nocodb exec jest --runInBand --forceExit MssqlClientIntegration.spec.ts
