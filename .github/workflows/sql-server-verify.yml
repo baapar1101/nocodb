@@ -1,9 +1,9 @@
 name: SQL Server Verify
 
 on:
-  push:
+  pull_request:
     branches:
-      - feature/sql-server-data-source
+      - develop
   workflow_dispatch:
 
 jobs:
