@@ -6,6 +6,7 @@ import PgClient from '~/db/sql-client/lib/pg/PgClient';
 import YugabyteClient from '~/db/sql-client/lib/pg/YugabyteClient';
 import TidbClient from '~/db/sql-client/lib/mysql/TidbClient';
 import VitessClient from '~/db/sql-client/lib/mysql/VitessClient';
+import MssqlClient from '~/db/sql-client/lib/mssql/MssqlClient';
 
 export class SqlClientFactory {
   static create(connectionConfig): any {
@@ -27,6 +28,8 @@ export class SqlClientFactory {
       if (connectionConfig.meta.dbtype === 'yugabyte')
         return new YugabyteClient(connectionConfig);
       return new PgClient(connectionConfig);
+    } else if (connectionConfig.client === 'mssql') {
+      return new MssqlClient(connectionConfig);
     }
 
     NcError.notImplemented(
