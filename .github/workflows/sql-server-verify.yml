@@ -1,0 +1,39 @@
+name: SQL Server Verify
+
+on:
+  push:
+    branches:
+      - feature/sql-server-data-source
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies and refresh lockfile
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Run MSSQL factory tests
+        run: pnpm --filter=nocodb exec jest --runInBand --forceExit src/db/sql-client/lib/SqlClientFactory.spec.ts
+
+      - name: Type-check backend
+        run: pnpm --filter=nocodb exec tsc --noEmit --pretty false
+
+      - name: Upload refreshed lockfile
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sql-server-pnpm-lock
+          path: pnpm-lock.yaml
