@@ -124,9 +124,8 @@ const onEasterEgg = () => {
 
 const clientTypes = computed(() => {
   return _clientTypes.filter((type) => {
-    // MSSQL/Oracle are EE-only — hidden in CE and in community mode; in a normal EE
-    // build they're gated by their paid add-on.
-    if (!showEEFeatures.value && [ClientType.MSSQL, ClientType.ORACLE].includes(type.value)) return false
+    // SQL Server is supported by the OSS backend. Keep Oracle gated in CE/community mode.
+    if (!showEEFeatures.value && type.value === ClientType.ORACLE) return false
 
     return (
       ([ClientType.SNOWFLAKE, ClientType.DATABRICKS].includes(type.value) && easterEgg.value) ||

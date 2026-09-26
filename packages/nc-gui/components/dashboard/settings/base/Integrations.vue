@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
-import { DefaultEnvironmentKey, IntegrationCategoryType, IntegrationsType, integrationSupportsEnvironments } from 'nocodb-sdk'
+import { ClientType, DefaultEnvironmentKey, IntegrationCategoryType, IntegrationsType, integrationSupportsEnvironments } from 'nocodb-sdk'
 import type { EnvironmentType, IntegrationType } from 'nocodb-sdk'
 import type { IntegrationItemType, NcTableColumnProps } from '#imports'
 
@@ -171,9 +171,9 @@ const integrationsMap = computed(() => {
           i.isAvailable &&
           // OSS-only (e.g. SQLite) only on free, self-hosted (CE + unlicensed On-Prem)
           (isEEFeatureBlocked.value || !i.isOssOnly) &&
-          // EE-only (e.g. MSSQL, Oracle) hidden in CE and in community mode; in a
-          // normal EE build gated by their paid add-on.
-          (showEEFeatures.value || !i.isEeOnly) &&
+          // SQL Server is supported by the OSS backend; keep other EE-only
+          // integrations (for example Oracle) hidden in CE/community mode.
+          (showEEFeatures.value || !i.isEeOnly || i.sub_type === ClientType.MSSQL) &&
           i.sub_type !== SyncDataType.NOCODB &&
           (!query || integrationLabel(i.title).toLowerCase().includes(query)),
       ),

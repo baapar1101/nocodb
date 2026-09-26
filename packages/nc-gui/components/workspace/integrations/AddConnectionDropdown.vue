@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { IntegrationCategoryType } from 'nocodb-sdk'
+import { ClientType, IntegrationCategoryType } from 'nocodb-sdk'
 
 // Auth-provider databases carry no manifest `order`, so they otherwise sort last.
 // The list is explicit because nothing in the manifest tells them apart from the
@@ -79,9 +79,9 @@ const isIntegrationAllowed = (i: (typeof allIntegrations)[number], _category: (t
   if (i.hidden) return false
   if (!i.isAvailable) return false
   if (i.sub_type === SyncDataType.NOCODB) return false
-  // EE-only data sources (e.g. MSSQL, Oracle) are hidden in CE; in EE they're gated by their paid add-on.
-  // EE-only sources (MSSQL, Oracle) are hidden in CE and in community mode.
-  if (!showEEFeatures.value && i.isEeOnly) return false
+  // SQL Server is supported by the OSS backend and should be available as a data source.
+  // Keep other EE-only integrations (for example Oracle) hidden in CE/community mode.
+  if (!showEEFeatures.value && i.isEeOnly && i.sub_type !== ClientType.MSSQL) return false
   // OSS-only integrations (e.g. SQLite) only on free, self-hosted (CE + unlicensed On-Prem);
   // hidden on licensed On-Prem and Cloud. isEEFeatureBlocked is true exactly for that case.
   if (!isEEFeatureBlocked.value && i.isOssOnly) return false

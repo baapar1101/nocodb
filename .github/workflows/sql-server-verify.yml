@@ -1,0 +1,56 @@
+name: SQL Server Verify
+
+on:
+  pull_request:
+    branches:
+      - develop
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      mssql:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: Y
+          MSSQL_SA_PASSWORD: NocoDB_SQL_2026!
+        ports:
+          - 1433:1433
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Build SDK
+        run: pnpm --filter=nocodb-sdk run build
+
+      - name: Run MSSQL factory tests
+        run: pnpm --filter=nocodb exec jest --runInBand --forceExit SqlClientFactoryIntegration.spec.ts
+
+      # A full backend `tsc --noEmit` currently fails on develop because this public
+      # tree references generated/private integration and MCP modules that are absent
+      # independently of SQL Server. The focused Jest tests compile the touched MSSQL
+      # path, and the live smoke test below exercises it against SQL Server 2022.
+      - name: Run SQL Server 2022 smoke test
+        env:
+          NC_TEST_MSSQL: 'true'
+          MSSQL_HOST: 127.0.0.1
+          MSSQL_PORT: 1433
+          MSSQL_USER: sa
+          MSSQL_PASSWORD: NocoDB_SQL_2026!
+          MSSQL_DATABASE: master
+        run: pnpm --filter=nocodb exec jest --runInBand --forceExit MssqlClientIntegration.spec.ts

@@ -195,6 +195,7 @@
     "sqlite3": "^5.1.7",
     "stream-json": "^1.9.1",
     "stripe": "^18.2.1",
+    "tedious": "20.0.0",
     "tinycolor2": "^1.6.0",
     "twilio": "^4.23.0",
     "unpdf": "^1.2.1",

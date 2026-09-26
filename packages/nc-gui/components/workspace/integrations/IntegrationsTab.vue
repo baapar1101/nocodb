@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { IntegrationCategoryType, PlanFeatureTypes } from 'nocodb-sdk'
+import { ClientType, IntegrationCategoryType, PlanFeatureTypes } from 'nocodb-sdk'
 import NcModal from '~/components/nc/Modal.vue'
 
 import { type IntegrationItemType, SyncDataType } from '#imports'
@@ -139,9 +139,9 @@ const getIntegrationsByCategory = (category: IntegrationCategoryType, query: str
 
     if (i.hidden) return false
 
-    // EE-only data sources (e.g. MSSQL, Oracle) are hidden in CE; in EE they're gated by their paid add-on.
-    // EE-only sources (MSSQL, Oracle) are hidden in CE and in community mode.
-    if (!showEEFeatures.value && i.isEeOnly) return false
+    // SQL Server is supported by the OSS backend and should be available as a data source.
+    // Keep other EE-only integrations (for example Oracle) hidden in CE/community mode.
+    if (!showEEFeatures.value && i.isEeOnly && i.sub_type !== ClientType.MSSQL) return false
 
     return (
       isOssOnlyAllowed &&
