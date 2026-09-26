@@ -1,3 +1,4 @@
+jest.mock('~/utils', () => ({ T: { emit: jest.fn() } }));
 jest.mock('./mysql/MysqlClient', () => ({ __esModule: true, default: class MysqlClient {} }));
 jest.mock('./mysql/TidbClient', () => ({ __esModule: true, default: class TidbClient {} }));
 jest.mock('./mysql/VitessClient', () => ({ __esModule: true, default: class VitessClient {} }));
