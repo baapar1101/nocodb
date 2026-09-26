@@ -1,3 +1,11 @@
+jest.mock('~/utils', () => ({ T: { emit: jest.fn() } }));
+jest.mock('./mysql/MysqlClient', () => ({ __esModule: true, default: class MysqlClient {} }));
+jest.mock('./mysql/TidbClient', () => ({ __esModule: true, default: class TidbClient {} }));
+jest.mock('./mysql/VitessClient', () => ({ __esModule: true, default: class VitessClient {} }));
+jest.mock('./pg/PgClient', () => ({ __esModule: true, default: class PgClient {} }));
+jest.mock('./pg/YugabyteClient', () => ({ __esModule: true, default: class YugabyteClient {} }));
+jest.mock('./sqlite/SqliteClient', () => ({ __esModule: true, default: class SqliteClient {} }));
+
 jest.mock('~/helpers/resolveSslFileConfig', () => ({
   resolveSslFileConfig: jest.fn(async () => undefined),
 }));
