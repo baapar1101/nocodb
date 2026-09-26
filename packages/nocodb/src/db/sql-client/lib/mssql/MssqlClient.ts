@@ -251,13 +251,27 @@ class MssqlClient extends KnexClient {
           AND pk.TABLE_NAME = c.TABLE_NAME
           AND pk.COLUMN_NAME = c.COLUMN_NAME
          LEFT JOIN (
-           SELECT DISTINCT ku.TABLE_CATALOG, ku.TABLE_SCHEMA, ku.TABLE_NAME, ku.COLUMN_NAME
-           FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc
-           INNER JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE ku
-             ON ku.CONSTRAINT_CATALOG = tc.CONSTRAINT_CATALOG
-            AND ku.CONSTRAINT_SCHEMA = tc.CONSTRAINT_SCHEMA
-            AND ku.CONSTRAINT_NAME = tc.CONSTRAINT_NAME
-           WHERE tc.CONSTRAINT_TYPE = 'UNIQUE'
+           -- SQL Server exposes UNIQUE constraints and explicit UNIQUE indexes
+           -- through sys.indexes. Knex may create the latter for table.unique(),
+           -- so INFORMATION_SCHEMA.TABLE_CONSTRAINTS alone misses valid uniques.
+           SELECT DISTINCT
+             DB_NAME() AS TABLE_CATALOG,
+             s.name AS TABLE_SCHEMA,
+             t.name AS TABLE_NAME,
+             col.name AS COLUMN_NAME
+           FROM sys.indexes i
+           INNER JOIN sys.tables t ON t.object_id = i.object_id
+           INNER JOIN sys.schemas s ON s.schema_id = t.schema_id
+           INNER JOIN sys.index_columns ic
+             ON ic.object_id = i.object_id
+            AND ic.index_id = i.index_id
+           INNER JOIN sys.columns col
+             ON col.object_id = ic.object_id
+            AND col.column_id = ic.column_id
+           WHERE i.is_unique = 1
+             AND i.is_primary_key = 0
+             AND i.is_hypothetical = 0
+             AND ic.key_ordinal > 0
          ) uq
            ON uq.TABLE_CATALOG = c.TABLE_CATALOG
           AND uq.TABLE_SCHEMA = c.TABLE_SCHEMA
